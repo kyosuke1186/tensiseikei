@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天賜の泉整形ツール</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #f0f4f8;
+    color: #1a2a3a;
+    min-height: 100vh;
+    padding: 40px 24px 60px;
+  }
+
+  .shell {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .header {
+    margin-bottom: 28px;
+    padding: 28px 32px;
+    background: linear-gradient(135deg, #1a4a7a 0%, #2a6aaa 60%, #3a8acc 100%);
+    border-radius: 12px;
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(26,74,122,.22);
+  }
+
+  .header .label {
+    font-size: 11px;
+    letter-spacing: .22em;
+    color: rgba(255,255,255,.65);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: #fff;
+  }
+
+  .header p {
+    margin-top: 8px;
+    font-size: 13px;
+    color: rgba(255,255,255,.75);
+  }
+
+  .drop-zone {
+    margin-bottom: 24px;
+    padding: 48px 28px;
+    border: 2px dashed #93bce0;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+    box-shadow: 0 2px 8px rgba(26,74,122,.06);
+  }
+
+  .drop-zone:hover,
+  .drop-zone.drag {
+    border-color: #2a6aaa;
+    background: #f0f7ff;
+    box-shadow: 0 4px 16px rgba(26,74,122,.12);
+  }
+
+  .drop-zone .main-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a4a7a;
+  }
+
+  .drop-zone .sub-text {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6a90b0;
+  }
+
+  #file-input { display: none; }
+
+  .results { display: none; }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .results-header .count {
+    font-size: 12px;
+    color: #2a6aaa;
+    font-weight: 600;
+    letter-spacing: .08em;
+    background: #e8f2fb;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid #b8d8f0;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    border: 1px solid #b8d0e8;
+    cursor: pointer;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    letter-spacing: .04em;
+    background: #fff;
+    color: #2a6aaa;
+    transition: background .12s, border-color .12s, box-shadow .12s;
+  }
+
+  button:hover {
+    background: #f0f7ff;
+    border-color: #2a6aaa;
+    box-shadow: 0 2px 8px rgba(26,74,122,.10);
+  }
+
+  .btn-primary {
+    background: #1a4a7a;
+    color: #fff;
+    border-color: #1a4a7a;
+  }
+
+  .btn-primary:hover {
+    background: #2a6aaa;
+    border-color: #2a6aaa;
+    box-shadow: 0 2px 10px rgba(26,74,122,.22);
+  }
+
+  .btn-danger {
+    color: #c0392b;
+    border-color: #e0b8b5;
+  }
+
+  .btn-danger:hover {
+    background: #fdf2f2;
+    border-color: #c0392b;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #cde0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 13px;
+    box-shadow: 0 2px 10px rgba(26,74,122,.07);
+  }
+
+  thead tr {
+    background: linear-gradient(90deg, #e8f2fb, #d8eaf8);
+    border-bottom: 1px solid #cde0f0;
+  }
+
+  th {
+    padding: 11px 14px;
+    text-align: left;
+    color: #2a6aaa;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  th.right, td.right { text-align: right; }
+
+  tbody tr {
+    border-bottom: 1px solid #eef4fa;
+    transition: background .1s;
+  }
+
+  tbody tr:hover { background: #f5f9fd; }
+  tbody tr:last-child { border-bottom: none; }
+
+  td { padding: 11px 14px; color: #2a3a4a; }
+
+  .td-filename { color: #5a7a9a; font-size: 12px; }
+  .td-adcode { color: #1a3a5a; font-weight: 600; }
+  .td-mobile { color: #1a8a5a; font-weight: 600; }
+  .td-pc { color: #1a6aaa; font-weight: 600; }
+  .td-skip { color: #c0392b; font-weight: 600; }
+  .td-total { color: #1a2a3a; font-weight: 700; }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #5a7a9a;
+  }
+
+  .dot-green { color: #1a8a5a; }
+  .dot-blue { color: #1a6aaa; }
+
+  .format-preview {
+    margin-top: 28px;
+    padding: 20px 24px;
+    border: 1px solid #cde0f0;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(26,74,122,.05);
+  }
+
+  .format-preview .title {
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #2a6aaa;
+  }
+
+  .format-preview table {
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    font-size: 12px;
+  }
+
+  .format-preview th {
+    padding: 4px 12px;
+    background: transparent;
+    border: none;
+    color: #6a90b0;
+  }
+
+  .format-preview td {
+    padding: 5px 12px;
+    border: none;
+  }
+
+  .format-preview td.green { color: #1a8a5a; font-weight: 600; }
+  .format-preview td.blue { color: #1a6aaa; font-weight: 600; }
+  .format-preview td.dim { color: #c0cfd8; }
+  .format-preview td.kana { color: #2a3a4a; font-weight: 600; }
+
+  .note {
+    margin-top: 12px;
+    color: #8aaac0;
+    font-size: 11px;
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 20px 12px 36px; }
+    .header { padding: 20px 20px; }
+    .header h1 { font-size: 21px; }
+    .drop-zone { padding: 36px 16px; }
+    th, td { padding: 8px 8px; font-size: 11px; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/encoding-japanese@2.2.0/encoding.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <div class="header">
+    <div class="label">Mail CSV Formatter</div>
+    <h1>天賜の泉整形ツール</h1>
+    <p>複数CSVを投入 → 自動整形・結合 → 日付ファイルでダウンロード</p>
+  </div>
+
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept=".csv" multiple>
+    <div class="main-text" id="drop-text">CSVファイルを投入（複数同時OK）</div>
+    <div class="sub-text">クリックしてファイル選択も可</div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="results-header">
+      <div class="count" id="results-count"></div>
+      <div class="btn-group">
+        <button class="btn-danger" onclick="clearAll()">クリア</button>
+        <button class="btn-primary" onclick="downloadMerged()">ダウンロード</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ファイル名</th>
+          <th>広告コード</th>
+          <th class="right">モバイル行数</th>
+          <th class="right">PC行数</th>
+          <th class="right">拒否除外</th>
+          <th class="right">合計行数</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+
+    <div class="legend">
+      <span><span class="dot-green">●</span> モバイル: au / docomo / softbank / vodafone 系</span>
+      <span><span class="dot-blue">●</span> PC: 上記以外（拒否リスト除外済み）</span>
+    </div>
+  </div>
+
+  <div class="format-preview">
+    <div class="title">出力フォーマット（1行1アドレス）</div>
+    <table>
+      <thead>
+        <tr><th>A列</th><th>B</th><th>C</th><th>D列</th><th>E列</th><th>F</th><th>G</th><th>H列</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="kana">あなた</td><td class="dim">空</td><td class="dim">空</td>
+          <td class="green">モバイルアドレス</td><td class="dim">空</td>
+          <td class="dim">空</td><td class="dim">空</td><td class="kana">広告コード</td>
+        </tr>
+        <tr>
+          <td class="kana">あなた</td><td class="dim">空</td><td class="dim">空</td>
+          <td class="dim">空</td><td class="blue">PCアドレス</td>
+          <td class="dim">空</td><td class="dim">空</td><td class="kana">広告コード</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">出力ファイル名: 今日の日付.csv（例: 20260331.csv）　文字コード: Shift_JIS（CSVコンマ区切り）</div>
+  </div>
+
+</div>
+
+<script>
+const MOBILE_DOMAINS = new Set([
+  "au.com","c.vodafone.ne.jp","d.vodafone.ne.jp","docomo.ne.jp",
+  "ezweb.ne.jp","h.vodafone.ne.jp","i.softbank.jp","k.vodafone.ne.jp",
+  "n.vodafone.ne.jp","q.vodafone.ne.jp","r.vodafone.ne.jp","s.vodafone.ne.jp",
+  "t.vodafone.ne.jp","vodafone.ne.jp"
+]);
+
+const REJECT_LIST = new Set([
+  "kawamoto.kimiko@jp.panasonic.com","kawagoe@kentaku.co.jp",
+  "kato.kazunori@jp.panasonic.com","kashiwakura-katsuhiro@sistm.co.jp",
+  "kanzaki.shuichiro@jp.panasonic.com","kaname@ishida.co.jp",
+  "kakehata.ch@jp.panasonic.com","kaise.yoshinori@tepco.co.jp",
+  "jinji@seiko-sts.co.jp","iwanami.f@tepco.co.jp",
+  "iwanaga.2h4.okinori@krosaki.co.jp","iuchi.rie@kk.jp.panasonic.com",
+  "itou-ho2@kandenko.co.jp","ishii.hideaki@stepon.co.jp",
+  "ishihara@shimabun.co.jp","ishiguro_yoshihisa@grp.conveyor.co.jp",
+  "ishida@lifedesign.co.jp","ishibashi.mitsuru326@jp.panasonic.com",
+  "isamu.miyoshi@nittoc.co.jp","irii@maruhachi-co.jp",
+  "info-k@e-hakuba.com","info@minatostyle.co.jp",
+  "info@hiro-ex.com","info@discdog.co.jp","info@cedar.jp",
+  "imamura.taiki@jp.panasonic.com","ikurou.kishi@daikin.co.jp",
+  "ikeda.shinkichi@jp.panasonic.com","ichinose.yoshi@tepco.co.jp",
+  "huge@ehime-np.co.jp","htm_hirayama@daidokogyo.co.jp",
+  "htatsukawa@shinkoh-elecs.co.jp","hosting@ini.co.jp",
+  "honsyaeigyo@morihei.com","honsha_softcalm@toho-zinc.co.jp",
+  "honsha_kanri_system@toho-zinc.co.jp","hongkong_buhin@toho-zinc.co.jp",
+  "hiroyuki_yoshizawa@mufg.jp","hirotos@it.secnet.co.jp",
+  "hiroshi_kusama@pharm.kissei.co.jp","hiroki.koizumi@jp.yazaki.com",
+  "hiranuma.kanji@jp.panasonic.com","himejinishi@kentaku.co.jp",
+  "hideki.kamizono@jnfl.co.jp","hayashi@tsf.tgn.ne.jp",
+  "hayashi.hiroyuki243@jp.panasonic.com","hayashi.hiroyuki232@jp.panasonic.com",
+  "hayasaka.kyoko@jp.panasonic.com","hashizume.hiroyoshi@tepco.co.jp",
+  "hamanaka@star.fielding.nec.co.jp","greenfield@green-f.biz",
+  "g009jss-mng@ml.gakkai.ne.jp","funabashi@kentaku.co.jp",
+  "fukuyamah@kge.co.jp","fukuokanishi@kentaku.co.jp",
+  "fukui@daiwaliving.co.jp","fukuda@bsnnet.co.jp",
+  "fujisaw.koichi@jp.panasonic.com","fujikawa-n@star.fielding.nec.co.jp",
+  "fjinbo@dsk.daido.co.jp","e-takenokoshi@ac.daido.co.jp",
+  "emiko_uchiyama@mufg.jp","e-mailsaga1@saga-s.edu.city.kyoto.jp",
+  "eijirou_nishi@mufg.jp","edahiro.naoaki@jp.panasonic.com",
+  "eco-club@tepco.co.jp","e_info@shinseifinancial.co.jp",
+  "e.takahashi@port-of-nagoya.jp","demizu.yoshiyuki@stepon.co.jp",
+  "deform@yamanaka-eng.co.jp","dec-yoshimura@sog.daido.co.jp",
+  "dec-noda@sog.daido.co.jp","customer@nikkeimm.co.jp",
+  "contact@shiftbrain.co.jp","chushikoku@aaconst.co.jp",
+  "cad-master@photron.co.jp","business@jpccom.com",
+  "bbarker@tkw.com","bb3132@bigboyjapan.co.jp","bb3101@bigboyjapan.co.jp",
+  "atsuo-akiyo@toho-zinc.co.jp","asaoka.seiki@jp.panasonic.com",
+  "asai@fdk.co.jp","aokihi@aig.co.jp",
+  "aoki.hiroshi004@jp.panasonic.com","anzai@mxp.nes.nec.co.jp",
+  "amemiya.tomohiro@tepco.co.jp","akiyam@bsnnet.co.jp",
+  "akata-tomochika@toho-zinc.co.jp","ag05d@mail.yondenko.co.jp",
+  "ag.yokomizo.hideaki@metlife.co.jp","adsales@hatena.ne.jp",
+  "27392839.72071.sa.safeattach@mutoh.co.jp",
+  "200601241824164532.272@sog.daido.co.jp","0815@nakafu.com"
+]);
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isMobile(email) {
+  const domain = (email.split("@")[1] || "").toLowerCase();
+  return MOBILE_DOMAINS.has(domain);
+}
+
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    const cells = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else { inQ = !inQ; }
+      } else if (c === ',' && !inQ) { cells.push(cur.trim()); cur = ""; }
+      else { cur += c; }
+    }
+    cells.push(cur.trim());
+    rows.push(cells);
+  }
+  return rows;
+}
+
+let allResults = [];
+
+function processFile(name, text) {
+  const baseName = name.replace(/\.[^/.]+$/, "");
+  const adCode = "kaiun_" + baseName;
+  const rows = parseCSV(text);
+  let mobileEmails = [], pcEmails = [], skipCount = 0;
+  for (const row of rows) {
+    const cell = (row[0] || "").trim();
+    if (!EMAIL_RE.test(cell)) continue;
+    const email = cell.toLowerCase();
+    if (isMobile(email)) {
+      mobileEmails.push(email);
+    } else {
+      if (REJECT_LIST.has(email)) { skipCount++; }
+      else { pcEmails.push(email); }
+    }
+  }
+  return { name, adCode, mobile: mobileEmails, pc: pcEmails, skip: skipCount };
+}
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function q(s) { return `"${(s||"").replace(/"/g,'""')}"`; }
+
+function buildMergedCSV(results) {
+  const rows = [];
+  for (const r of results) {
+    for (const mob of r.mobile)
+      rows.push([q("あなた"),q(""),q(""),q(mob),q(""),q(""),q(""),q(r.adCode)].join(","));
+    for (const pc of r.pc)
+      rows.push([q("あなた"),q(""),q(""),q(""),q(pc),q(""),q(""),q(r.adCode)].join(","));
+  }
+  return rows.join("\r\n");
+}
+
+function downloadMerged() {
+  if (!allResults.length) return;
+  const csv = buildMergedCSV(allResults);
+  const sjisArray = Encoding.convert(csv, { to:"SJIS", from:"UNICODE", type:"array" });
+  const blob = new Blob([new Uint8Array(sjisArray)], { type:"text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = getTodayStr()+".csv";
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderResults() {
+  const tbody = document.getElementById("results-body");
+  tbody.innerHTML = "";
+  let tM = 0, tP = 0, tS = 0;
+  allResults.forEach(r => {
+    tM += r.mobile.length; tP += r.pc.length; tS += r.skip;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="td-filename">${escHtml(r.name)}</td>
+      <td class="td-adcode">${escHtml(r.adCode)}</td>
+      <td class="right td-mobile">${r.mobile.length.toLocaleString()}</td>
+      <td class="right td-pc">${r.pc.length.toLocaleString()}</td>
+      <td class="right td-skip">${r.skip.toLocaleString()}</td>
+      <td class="right td-total">${(r.mobile.length+r.pc.length).toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  if (allResults.length > 1) {
+    const tr = document.createElement("tr");
+    tr.style.cssText = "border-top:2px solid #cde0f0;background:#eef6fc;font-weight:700";
+    tr.innerHTML = `
+      <td style="font-size:11px;letter-spacing:.08em;color:#2a6aaa;font-weight:700">TOTAL</td><td></td>
+      <td class="right td-mobile">${tM.toLocaleString()}</td>
+      <td class="right td-pc">${tP.toLocaleString()}</td>
+      <td class="right td-skip">${tS.toLocaleString()}</td>
+      <td class="right td-total">${(tM+tP).toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  document.getElementById("results-count").textContent = `${allResults.length}ファイル処理完了`;
+  document.getElementById("results").style.display = "block";
+}
+
+function clearAll() {
+  allResults = [];
+  document.getElementById("results").style.display = "none";
+  document.getElementById("results-body").innerHTML = "";
+  document.getElementById("drop-text").textContent = "CSVファイルを投入（複数同時OK）";
+  document.getElementById("file-input").value = "";
+}
+
+async function readFileSmart(file) {
+  const buffer = await file.arrayBuffer();
+  const uint8 = new Uint8Array(buffer);
+  let text = "";
+  try { text = new TextDecoder("shift-jis").decode(uint8); } catch(e) {}
+  if (!text || text.indexOf("\uFFFD") !== -1) {
+    try { text = new TextDecoder("utf-8").decode(uint8); } catch(e) {}
+  }
+  return text;
+}
+
+async function handleFiles(files) {
+  const csvFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith(".csv"));
+  if (!csvFiles.length) return;
+  document.getElementById("drop-text").textContent = "処理中...";
+  const existingNames = new Set(allResults.map(r => r.name));
+  const targets = csvFiles.filter(f => !existingNames.has(f.name));
+  const processed = await Promise.all(targets.map(async f => {
+    try { return processFile(f.name, await readFileSmart(f)); } catch(e) { return null; }
+  }));
+  allResults = [...allResults, ...processed.filter(Boolean)];
+  document.getElementById("drop-text").textContent = "さらに追加登録できます";
+  renderResults();
+}
+
+const dropZone = document.getElementById("drop-zone");
+const fileInput = document.getElementById("file-input");
+dropZone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", e => handleFiles(e.target.files));
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
+dropZone.addEventListener("drop", e => { e.preventDefault(); dropZone.classList.remove("drag"); handleFiles(e.dataTransfer.files); });
+</script>
+</body>
+</html>
